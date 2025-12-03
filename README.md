@@ -114,3 +114,49 @@ done
 echo "Part 2: $total"
 
 ```
+
+# --- Day 3: Lobby ---
+C++ - It was pretty obvious what part 2 was going to be so this solution can do either. There are far better ways to do this, but the numbers are small and I only optimize when I have to.
+
+``` c++
+#include <iostream>
+#include <fstream>
+#include <stdint.h>
+
+const int Part1 = 2;
+const int Part2 = 12;
+
+using namespace std;
+
+int main() {
+    std::ifstream file("Input.txt");
+    string row;
+    uint64_t total = 0;
+
+    int digits = Part1;
+
+    while (file >> row) {
+        uint64_t rowValue = 0;
+        int max = -1;
+        int start = 0;
+
+        for (int m=0;m<digits;m++) {
+            for (int n=start;n<=(row.size()-(digits-m));n++) {
+                if (row[n] > max) {
+                    max = row[n];
+                    start = n+1;
+                }
+            }
+            rowValue *= 10;
+            rowValue = rowValue + (max - 48);
+            max = -1;
+        }
+
+        total += rowValue;
+    }
+
+    cout << total << endl;
+
+    return 0;
+}
+```
