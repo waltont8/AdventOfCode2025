@@ -160,3 +160,79 @@ int main() {
     return 0;
 }
 ```
+
+# --- Day 4: Printing Department ---
+D seems like a nice language. C++ with some convenience features and a few of the rough edges smoothed off. Hopefully all the 2d map type questions land on days with mutable arrays!
+
+``` D
+import std.stdio;
+import std.array;
+
+int isPaper(const bool[][] grid, size_t x, size_t y) {
+    if (y>=grid.length) return 0;
+    if (x>=grid[y].length) return 0;
+    if (y<0) return 0;
+    if (x<0) return 0;
+    return grid[y][x]?1:0;
+}
+
+int neighbourCount(const bool[][] grid, size_t x, size_t y) {
+    int neighbours = isPaper(grid, x-1,y-1) + isPaper(grid, x,y-1) + isPaper(grid, x+1,y-1)
+                   + isPaper(grid, x-1,y)                          + isPaper(grid, x+1,y)
+                   + isPaper(grid, x-1,y+1) + isPaper(grid, x,y+1) + isPaper(grid, x+1,y+1);
+    return neighbours;    
+}
+
+void main()
+{
+    bool[][] grid;
+    auto lines = stdin.byLineCopy.array;
+
+    foreach (line; lines) {
+        bool[] row;
+        row.reserve(line.length);
+
+        foreach (c; line) {
+            row ~= (c == '@');
+        }
+
+        grid ~= row;
+    }
+
+    // Count part 1
+    int total = 0;
+    foreach (y, row; grid) {
+        foreach (x, cell; row) {
+            if (cell) {
+                int neighbours = neighbourCount(grid, x,y);
+                if (neighbours < 4) {
+                    total++;
+                }
+            }
+        }
+    }
+    writeln(total);
+
+    // Do part 2
+    bool didChange = true;
+    int removed = 0;
+
+    while (didChange) {
+        didChange = false;
+        foreach (y, row; grid) {
+            foreach (x, cell; row) {
+                if (cell) {
+                    int neighbours = neighbourCount(grid, x,y);
+
+                    if (neighbours < 4) {
+                        grid[y][x] = false;
+                        didChange = true;
+                        removed++;
+                    }
+                }
+            }
+        }
+    }
+    writeln(removed);
+}
+```
