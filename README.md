@@ -236,3 +236,63 @@ void main()
     writeln(removed);
 }
 ```
+
+# --- Day 5: Cafeteria ---
+That was another easy problem. What was hard was elixir. There's nothing really wrong with the language, it feels somewhere between f# and haskell but my brain does not parse this syntax well, it keeps expecting haskell. I spent last night collecting small snippets of elixir and writing tiny example programs and then cobbled this together today.
+
+``` elixir
+# Get the first argument
+file = System.argv() |> List.first()
+
+# Read in all the lines
+lines = file
+        |> File.read!()
+        |> String.split("\n")
+        |> Enum.map(&String.trim/1)
+
+# Split on empty
+[range_lines, ingredient_lines] = lines
+        |> Enum.chunk_by(&(&1 == ""))
+        |> Enum.reject(&(&1 == [""]))
+
+
+# Get the ranges
+ranges = Enum.map(range_lines, fn line ->
+    [lo, hi] = line
+               |> String.split("-")
+               |> Enum.map(&String.to_integer/1)
+    {lo, hi}
+end)
+
+# Now get the values
+values = Enum.map(ingredient_lines, &String.to_integer/1)
+
+# Count how many values fall into a range
+# Watch out for overlaps
+part1 = Enum.count(values, fn v ->
+    Enum.any?(Enum.map(ranges, fn {lo, hi} ->
+        if (v >= lo and v <= hi) , do: true, else: false
+     end))
+  end)
+
+
+IO.puts("Part1: #{part1}")
+
+# Lose the overlaps. Not a big surprise.
+sorted = Enum.reduce(Enum.sort_by(ranges, fn {from, _to} -> from end), [], 
+        fn  {from, to}, []  -> [{from, to}] 
+            {from, to}, acc -> [{accFrom, accTo} | rest] = acc
+                               if from <= accTo do
+                                   merged = {accFrom, max(to, accTo)}
+                                   [merged | rest]
+                               else
+                                   [{from, to} | acc]
+                               end
+        end)
+        |> Enum.reverse()
+
+part2 = Enum.map(sorted, fn {from, to} -> to - from + 1 end)
+        |> Enum.sum()
+
+IO.puts("Part2: #{part2}")
+```
