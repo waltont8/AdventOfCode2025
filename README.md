@@ -296,3 +296,83 @@ part2 = Enum.map(sorted, fn {from, to} -> to - from + 1 end)
 
 IO.puts("Part2: #{part2}")
 ```
+
+# --- Day 6: Trash Compactor ---
+F# - Another easy puzzle. I remember quite liking f# but that was clearly from before I got hold of haskell. It just feels clunky now.
+I tried a few recommended formatters for the code but none of them could make it look tidy. I also tried hand formatting it but it is weirdly fussy about whitespace and throws a lot of errors. Probably fine when you're used to it but I found it quite frustrating.
+
+``` f#
+open System
+open System.IO
+
+let file = Environment.GetCommandLineArgs() |> Array.skip 2 |> Array.head
+
+let lines = File.ReadAllLines(file)
+
+let operators = lines.[lines.Length - 1]
+let numbers = lines.[0 .. lines.Length - 2]
+
+// Strings to arrays of numbers
+let rows =
+    numbers
+    |> Array.map (fun line ->
+        line.Split([| ' '; '\t' |], System.StringSplitOptions.RemoveEmptyEntries)
+        |> Array.map int64)
+
+// rows to columns
+let columns =
+    Array.init rows.[0].Length (fun c -> rows |> Array.map (fun row -> row.[c]))
+
+let ops =
+    operators.Split([| ' '; '\t' |], System.StringSplitOptions.RemoveEmptyEntries)
+
+// This is what passes for zip in f#
+let results =
+    Array.map2
+        (fun o c ->
+            if o = "*" then
+                Array.reduce (fun acc x -> acc * x) c
+            else
+                Array.sum c)
+        ops
+        columns
+
+printfn "Part1: %d" (Array.sum results)
+
+// Transpose the array of rows and start again
+// Version built into List seems to only take squares
+let maxLen = numbers |> Array.map String.length |> Array.max
+let transposed = 
+    [| for i in 0 .. maxLen - 1 ->
+           numbers
+           |> Array.choose (fun s -> if i < s.Length then Some s.[i] else None)
+           |> System.String |]
+
+let part2Columns = 
+    transposed
+        |> Array.fold
+            (fun (acc, current) line ->
+                if line.Trim() = "" then
+                    if current = [] then
+                        acc, []
+                    else
+                        (List.rev current :: acc), []
+                else
+                    acc, (int64 (line.Trim()) :: current))
+            ([], [])
+        |> fun (acc, current) ->
+            let allChunks = if current = [] then acc else List.rev current :: acc
+            allChunks |> List.rev |> List.map List.toArray |> List.toArray
+
+let results2 =
+    Array.map2 (fun o c ->
+                   if o = "*" then
+                       Array.reduce (fun acc x -> acc * x) c
+                   else
+                       Array.sum c)
+               ops
+               part2Columns
+
+printfn "Part2: %d" (Array.sum results2)
+
+```
