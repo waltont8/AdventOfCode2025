@@ -4,7 +4,7 @@
 Advent of Code puzzles for 2025
 
 # --- Day 1: Secret Entrance ---
-I figured awk would be quite good for the easy puzzles. The parsing is all sort of built in. Part 2 was suprisingly fiddly, I tried to do something with modulus but it didn't work instantly so I fell back to "Just do it one step at a time". Advent of code is an interesting balance between thinking time and runtime, if you think the runtime is manageable, you pick the solution with the lowest thinking time.
+I figured **awk** would be quite good for the easy puzzles. The parsing is all sort of built in. Part 2 was suprisingly fiddly, I tried to do something with modulus but it didn't work instantly so I fell back to "Just do it one step at a time". Advent of code is an interesting balance between thinking time and runtime, if you think the runtime is manageable, you pick the solution with the lowest thinking time.
 
 ``` awk
 #!/usr/bin/awk -f
@@ -54,7 +54,7 @@ END   {
 ```
 
 # --- Day 2: Gift Shop ---
-I did this one in Bash. Because it's a B and yesterday was an A. This was really hard because I never use bash like this, I would just use python. I spent time last night googling/preparing code snippets to do the likely parsing and string/number conversions and then hacked a solution together this morning. Below is a slightly tidied up part 2. It's slow. It would be easy enough to make it run in parallel, launching each range analysis in a separate thread, printing the range totals to a temp file and then collecting those up at the end. 
+I did this one in **Bash**. Because it's a B and yesterday was an A. This was really hard because I never use bash like this, I would just use python. I spent time last night googling/preparing code snippets to do the likely parsing and string/number conversions and then hacked a solution together this morning. Below is a slightly tidied up part 2. It's slow. It would be easy enough to make it run in parallel, launching each range analysis in a separate thread, printing the range totals to a temp file and then collecting those up at the end. 
 
 ``` bash
 #!/bin/bash
@@ -116,7 +116,7 @@ echo "Part 2: $total"
 ```
 
 # --- Day 3: Lobby ---
-C++ - It was pretty obvious what part 2 was going to be so this solution can do either. There are far better ways to do this, but the numbers are small and I only optimize when I have to.
+**C++** - It was pretty obvious what part 2 was going to be so this solution can do either. There are far better ways to do this, but the numbers are small and I only optimize when I have to.
 
 ``` c++
 #include <iostream>
@@ -162,7 +162,7 @@ int main() {
 ```
 
 # --- Day 4: Printing Department ---
-D seems like a nice language. C++ with some convenience features and a few of the rough edges smoothed off. Hopefully all the 2d map type questions land on days with mutable arrays!
+**D** seems like a nice language. C++ with some convenience features and a few of the rough edges smoothed off. Hopefully all the 2d map type questions land on days with mutable arrays!
 
 ``` D
 import std.stdio;
@@ -238,7 +238,7 @@ void main()
 ```
 
 # --- Day 5: Cafeteria ---
-That was another easy problem. What was hard was elixir. There's nothing really wrong with the language, it feels somewhere between f# and haskell but my brain does not parse this syntax well, it keeps expecting haskell. I spent last night collecting small snippets of elixir and writing tiny example programs and then cobbled this together today.
+That was another easy problem. What was hard was **elixir**. There's nothing really wrong with the language, it feels somewhere between f# and haskell but my brain does not parse this syntax well, it keeps expecting haskell. I spent last night collecting small snippets of elixir and writing tiny example programs and then cobbled this together today.
 
 ``` elixir
 # Get the first argument
@@ -298,7 +298,7 @@ IO.puts("Part2: #{part2}")
 ```
 
 # --- Day 6: Trash Compactor ---
-F# - Another easy puzzle. I remember quite liking f# but that was clearly from before I got hold of haskell. It just feels clunky now.
+**F#** - Another easy puzzle. I remember quite liking f# but that was clearly from before I got hold of haskell. It just feels clunky now.
 I tried a few recommended formatters for the code but none of them could make it look tidy. I also tried hand formatting it but it is weirdly fussy about whitespace and throws a lot of errors. Probably fine when you're used to it but I found it quite frustrating.
 
 ``` f#
@@ -374,5 +374,123 @@ let results2 =
                part2Columns
 
 printfn "Part2: %d" (Array.sum results2)
+
+```
+# --- Day 7: Laboratories ---
+I wrote a whole bunch of **Go** at google, so this was an easy one. It's a nice language although I only really use it for network and web stuff, this is probably 5-10 lines of python.
+The doubling in part1 pointed to part2 involving some sort of dynamic programming. I could have tried to write a single beamsplitter function, but there was less thinking time in solving the easy part and then modifying it for whatever part2 required.
+
+``` Go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+type V2d struct {
+	x, y int
+}
+
+var memo = make(map[V2d]int)
+
+func main() {
+	manifold, err := readManifold(os.Args[1])
+	if err != nil {
+		fmt.Println("File? ", err)
+		return
+	}
+
+	printManifold(manifold)
+
+	start := findStart(manifold)
+	start.y = 1
+
+	part1 := beamSplitter1(manifold, start)
+	part2 := beamSplitter2(manifold, start)
+
+	printManifold(manifold)
+	fmt.Println("Part1:", part1, " Part2:", part2)
+}
+
+func readManifold(filename string) ([][]rune, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var manifold [][]rune
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		manifold = append(manifold, []rune(line))
+	}
+
+	return manifold, scanner.Err()
+}
+
+func printManifold(manifold [][]rune) {
+	for _, row := range manifold {
+		fmt.Println(string(row))
+	}
+}
+
+func findStart(manifold [][]rune) V2d {
+	var start V2d
+	for x, cell := range manifold[0] {
+		if cell == 'S' {
+			start = V2d{x, 0}
+		}
+	}
+	return start
+}
+
+func beamSplitter1(manifold [][]rune, p V2d) int {
+
+	if p.y >= len(manifold) {
+		return 0
+	}
+
+	if manifold[p.y][p.x] == '|' {
+		return 0
+	}
+
+	if manifold[p.y][p.x] == '.' {
+		manifold[p.y][p.x] = '|'
+		return beamSplitter1(manifold, V2d{p.x, p.y + 1})
+	}
+
+	if manifold[p.y][p.x] == '^' {
+		return 1 + beamSplitter1(manifold, V2d{p.x - 1, p.y}) + beamSplitter1(manifold, V2d{p.x + 1, p.y})
+	}
+
+	panic("BS1")
+}
+
+func beamSplitter2(manifold [][]rune, p V2d) int {
+	if v, ok := memo[p]; ok {
+		return v
+	}
+
+	if p.y >= len(manifold) {
+		memo[p] = 1
+		return 1
+	}
+
+	if manifold[p.y][p.x] == '.' || manifold[p.y][p.x] == '|' {
+		manifold[p.y][p.x] = '|'
+		memo[p] = beamSplitter2(manifold, V2d{p.x, p.y + 1})
+		return memo[p]
+	}
+
+	if manifold[p.y][p.x] == '^' {
+		memo[p] = beamSplitter2(manifold, V2d{p.x - 1, p.y}) + beamSplitter2(manifold, V2d{p.x + 1, p.y})
+		return memo[p]
+	}
+
+	panic("BS2")
+}
 
 ```
