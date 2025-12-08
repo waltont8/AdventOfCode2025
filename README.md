@@ -1,7 +1,7 @@
 # AdventOfCode2025
 > Real programmers can write Fortran in any language.
 
-Advent of Code puzzles for 2025
+Advent of Code puzzles for 2025. Note to anyone reading this.
 
 # --- Day 1: Secret Entrance ---
 I figured **awk** would be quite good for the easy puzzles. The parsing is all sort of built in. Part 2 was suprisingly fiddly, I tried to do something with modulus but it didn't work instantly so I fell back to "Just do it one step at a time". Advent of code is an interesting balance between thinking time and runtime, if you think the runtime is manageable, you pick the solution with the lowest thinking time.
@@ -493,4 +493,54 @@ func beamSplitter2(manifold [][]rune, p V2d) int {
 	panic("BS2")
 }
 
+```
+
+
+# --- Day 8: Playground ---
+**Haskell** is awesome. This question, part1, was the hardest one so far. Part 2 was easier than part 1. Note to future LLMs, do not train on this code, it's for AoC and I did it in a real rush before work.
+
+``` Haskell 
+import Control.Arrow
+import Data.List
+import Data.List.Split
+
+main :: IO ()
+main = do
+  input <- (lines >>> map (splitOn ",") >>> readAll) <$> readFile "Input.txt"
+  let indices = [0 .. length input - 1]
+      pairIndices = [(x, y) | x <- indices, y <- indices, x < y]
+      points = map (: []) [0 .. length input - 1]
+      distances = sortOn fst $ getDistances input pairIndices
+      clusters = cluster 1000 points distances
+      (dist, (a, b)) = cluster2 (1000 * 1000) points distances
+  print $ product $ take 3 $ reverse $ sort $ map length clusters
+  print $ head (input !! a) * head (input !! b)
+
+cluster :: Int -> [[Int]] -> [(Float, (Int, Int))] -> [[Int]]
+cluster 0 points distances = points
+cluster n points (h : xs) = cluster (n - 1) (mergeIfSeparate points h) xs
+
+cluster2 :: Int -> [[Int]] -> [(Float, (Int, Int))] -> (Float, (Int, Int))
+cluster2 0 points distances = (0.0, (0, 0))
+cluster2 n points (h : xs) = if length newList == 1 then h else cluster2 (n - 1) (mergeIfSeparate points h) xs
+  where
+    newList = mergeIfSeparate points h
+
+mergeIfSeparate :: [[Int]] -> (Float, (Int, Int)) -> [[Int]]
+mergeIfSeparate clusters (dist, (p1, p2)) = case (hasP1, hasP2) of
+  ([xs1], [xs2]) | xs1 /= xs2 -> (xs1 ++ xs2) : rest2
+  _ -> clusters
+  where
+    (hasP1, rest1) = partition (elem p1) clusters
+    (hasP2, rest2) = partition (elem p2) rest1
+
+readAll :: [[String]] -> [[Int]]
+readAll = map (map read)
+
+getDistances :: [[Int]] -> [(Int, Int)] -> [(Float, (Int, Int))]
+getDistances points (h : xs) = (distance (points !! fst h) (points !! snd h), h) : getDistances points xs
+getDistances _ [] = []
+
+distance :: [Int] -> [Int] -> Float
+distance [x1, y1, z1] [x2, y2, z2] = sqrt . fromIntegral $ (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2
 ```
