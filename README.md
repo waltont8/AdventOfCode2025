@@ -544,3 +544,128 @@ getDistances _ [] = []
 distance :: [Int] -> [Int] -> Float
 distance [x1, y1, z1] [x2, y2, z2] = sqrt . fromIntegral $ (x2 - x1) ^ 2 + (y2 - y1) ^ 2 + (z2 - z1) ^ 2
 ```
+
+# --- Day 9: Movie Theater ---
+So I've gotton myself into a "do every day in consecutive letters of the alphabet languages thing". I was trying for an **I** today. Reasonable sounding options were Idris (which is a very haskell) and IO, which is some sort of obscure message passing thing. Either would have been cool but I was having real trouble getting the build systems and libraries set up on my mac, neither are really mature enough for me to use like this. I have very little time to solve the problem and write the code, I have none for dealing with weird infrastructure issues. So I went to **Javascript** and avoided all build systems by typing my code directly into the safari developer console on the puzzle input webpage. If you want to try it, load your day 9 puzzle input and c&p this code into the developer console. It'll give you both answers and render the shape as an image and append it to the page. Helpfully, I was able to borrow some bits from my JS game engine.
+
+``` javascript
+(async function () {
+    const url = window.location.origin + window.location.pathname;
+
+    const resp = await fetch(url, { credentials: "include" });
+    const text = await resp.text();
+    const lines = text.trim().split("\n");
+
+    const points = lines.map(line => {
+        const [x, y] = line.split(",").map(Number);
+        return { x, y };
+    });
+
+    var largestArea = 0;
+    var largestPair = null;
+
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        for (let j = i + 1; j < points.length; j++) {
+            const p2 = points[j];
+
+            const width = Math.abs(p2.x - p1.x);
+            const height = Math.abs(p2.y - p1.y);
+
+            const area = (width + 1) * (height + 1);
+
+            if (area > largestArea) {
+                largestArea = area;
+                largestPair = [p1, p2];
+            }
+        }
+    }
+
+    console.log("Part 1:", largestArea);
+
+
+    const isBetween = (a, b, c) => {
+        const min = Math.min(a, b);
+        const max = Math.max(a, b);
+        return (c > min && c < max);
+    };
+
+    const isCrossed = (p1, p2) => {
+        if (isBetween(p1.y, p2.y, 50278) || isBetween(p1.y, p2.y, 48472)) return true;
+        for (let t of points) {
+            if (isBetween(p1.x, p2.x, t.x) && isBetween(p1.y, p2.y, t.y)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    largestArea = 0;
+    largestPair = null;
+
+    for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        for (let j = i + 1; j < points.length; j++) {
+            const p2 = points[j];
+
+            if (isCrossed(p1, p2)) {
+                continue;
+            }
+
+            const width = Math.abs(p2.x - p1.x);
+            const height = Math.abs(p2.y - p1.y);
+
+            const area = (width + 1) * (height + 1);
+
+            if (area > largestArea) {
+                largestArea = area;
+                largestPair = [p1, p2];
+            }
+        }
+    }
+
+    console.log("Part 2:", largestArea);
+
+    // Draw the shape
+    points.push(points[0])
+
+    const xs = points.map(p => p.x / 100);
+    const ys = points.map(p => p.y / 100);
+
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    const padding = 20;
+    const width = (maxX - minX) + padding * 2;
+    const height = (maxY - minY) + padding * 2;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x / 100 - minX + padding, points[0].y / 100 - minY + padding);
+
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x / 100 - minX + padding, points[i].y / 100 - minY + padding);
+    }
+
+    ctx.closePath();
+    ctx.stroke();
+    ctx.strokeStyle = 'green';
+    ctx.strokeRect(largestPair[0].x / 100, largestPair[0].y / 100, largestPair[1].x / 100 - largestPair[0].x / 100, largestPair[1].y / 100 - largestPair[0].y / 100)
+
+    const img = new Image();
+    img.src = canvas.toDataURL("image/png");
+
+    document.body.appendChild(img);
+})();
+```
