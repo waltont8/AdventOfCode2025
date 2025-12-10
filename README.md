@@ -669,3 +669,94 @@ So I've gotton myself into a "do every day in consecutive letters of the alphabe
     document.body.appendChild(img);
 })();
 ```
+
+#--- Day 10: Factory ---
+So part 1 was a nice BFS that I did in **Kotlin** which seems like a nice upgrade to java. Part 2 was disappointing though, it was clearly an ilp problem that needed to be solved by a parser so I borrowed some python from last year. It seems sort of pointless because I'm not writing my own solver in the 10 minutes I have for the question. I did later come back and bruteforce part2 with some minor optimizations and got the run down to 93 minutes. I'm sure I could get it much lower but I enjoyed part 1 in kotlin so I'll call that a day. Tomorrow I'm going to do Lua or Lisp.
+
+``` kotlin
+package aoc
+
+import java.io.File
+
+
+private val lights = mutableListOf<BooleanArray>()
+private val schematics = mutableListOf<List<List<Int>>>()
+private val voltage = mutableListOf<List<Int>>()
+
+    fun parseLine(line: String) {
+        val lightPattern = "\\[(.*?)\\]".toRegex().find(line)?.groupValues?.get(1)
+            ?: error("")
+
+        val lightArray = lightPattern.map { it == '#' }.toBooleanArray()
+
+        val schematicMatches = "\\((.*?)\\)".toRegex().findAll(line).map { match ->
+            val inside = match.groupValues[1].trim()
+            if (inside.isEmpty()) emptyList()
+            else inside.split(',').map { it.trim().toInt() }
+        }.toList()
+
+        val voltagePattern = "\\{(.*?)\\}".toRegex().find(line)?.groupValues?.get(1)
+            ?: error("")
+
+        val voltageList = voltagePattern.split(',').map { it.trim().toInt() }
+
+        lights += lightArray
+        schematics += schematicMatches
+        voltage += voltageList
+    }
+
+    fun applyChange(change:List<Int>, current:BooleanArray): BooleanArray {
+        var ret : BooleanArray = current.clone()
+        for (i in change) {
+            ret[i] = !ret[i]
+        }
+        return ret
+    }
+
+fun part1(): Int {
+    var totalMinSwitches = 0
+
+    for (n in lights.indices) {
+        val target = lights[n]
+        val switches = schematics[n]
+        val initial = BooleanArray(target.size)
+        val queue = ArrayDeque<Pair<BooleanArray, Int>>()
+        val visited = mutableSetOf<String>() 
+
+        queue.addLast(initial to 0)
+        visited.add(initial.joinToString(","))
+
+        println("Run $n for ${target.contentToString()}")
+
+        while (queue.isNotEmpty()) {
+            val (current, presses) = queue.removeFirst()
+
+            if (current contentEquals target) {
+                totalMinSwitches += presses
+                break
+            }
+
+            for (change in switches) {
+                val next = applyChange(change, current)
+                val key = next.joinToString(",")
+                if (key !in visited) {
+                    visited.add(key)
+                    queue.addLast(next to presses + 1)
+                }
+            }
+        }
+    }
+
+    return totalMinSwitches
+}
+
+
+fun main() {
+    val inputLines = File("Input.txt").readLines()
+    inputLines.map { parseLine(it) }
+
+    println("Part 1: ${part1()}")
+}
+
+
+```
