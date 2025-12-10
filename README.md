@@ -670,7 +670,7 @@ So I've gotton myself into a "do every day in consecutive letters of the alphabe
 })();
 ```
 
-#--- Day 10: Factory ---
+# --- Day 10: Factory ---
 So part 1 was a nice BFS that I did in **Kotlin** which seems like a nice upgrade to java. Part 2 was disappointing though, it was clearly an ilp problem that needed to be solved by a parser so I borrowed some python from last year. It seems sort of pointless because I'm not writing my own solver in the 10 minutes I have for the question. I did later come back and bruteforce part2 with some minor optimizations and got the run down to 93 minutes. I'm sure I could get it much lower but I enjoyed part 1 in kotlin so I'll call that a day. Tomorrow I'm going to do Lua or Lisp.
 
 ``` kotlin
