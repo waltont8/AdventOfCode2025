@@ -760,3 +760,99 @@ fun main() {
 
 
 ```
+
+# --- Day 11: Reactor ---
+
+This was much nicer than yesterday. I chose lua in the hope that there would be some good visualization opportunities that I could use Love2D with Lua on. Sadly, nothing really exciting to visualize, but Lua got the job done. Except for the way arrays work, which I find so clunky! Tomorrow should be M but there are really few good options to work with, a bunch of very minor languages that will be a pain to work with, the Modula-n languages, mysql? I might move on a letter in the interests of finding something nice to work with for the last day.
+
+``` lua
+local graph = {}
+
+function readInput(filename)
+    local g = {}
+
+    for line in io.lines(filename) do
+        local name, rest = line:match("([^:]+):%s*(.*)")
+
+        local neighbours = {}
+
+        for node in rest:gmatch("%S+") do
+            table.insert(neighbours, node)
+        end
+
+        g[name] = neighbours
+    end
+
+    return g
+end
+
+local memo = {}
+
+local function countPaths(graph, start, target)
+    if start == target then
+        return 1
+    end
+
+    local key = start .. "|" .. target
+    if memo[key] then
+        return memo[key]
+    end
+
+    local total = 0
+
+    for _, next in ipairs(graph[start] or {}) do
+        local p = countPaths(graph, next, target)
+        total = total + p
+    end
+
+    memo[key] = total
+    return total
+end
+
+
+local memo2 = {}
+
+local function memoGet(start, goal, seen1, seen2)
+    local m1 = memo2[start]; if not m1 then return nil end
+    local m2 = m1[goal]; if not m2 then return nil end
+    local m3 = m2[seen1]; if not m3 then return nil end
+    return m3[seen2]
+end
+
+local function memoSet(start, goal, seen1, seen2, value)
+    memo2[start] = memo2[start] or {}
+    memo2[start][goal] = memo2[start][goal] or {}
+    memo2[start][goal][seen1] = memo2[start][goal][seen1] or {}
+    memo2[start][goal][seen1][seen2] = value
+end
+
+function countPaths2(graph, start, goal, seen1, seen2)
+    if start == "dac" then seen1 = true end
+    if start == "fft" then seen2 = true end
+
+    local cached = memoGet(start, goal, seen1, seen2)
+    if cached then return cached end
+
+    if start == goal then
+        local v = (seen1 and seen2) and 1 or 0
+        memoSet(start, goal, seen1, seen2, v)
+        return v
+    end
+
+    local total = 0
+    for _, next in ipairs(graph[start] or {}) do
+        total = total + countPaths2(graph, next, goal, seen1, seen2)
+    end
+
+    memoSet(start, goal, seen1, seen2, total)
+    return total
+end
+
+graph = readInput("Input.txt")
+
+local part1 = countPaths(graph, "you", "out", false, false)
+print("Value " .. string.format("%.0f", part1))
+
+local part2 = countPaths2(graph, "svr", "out", false, false)
+print("Value " .. string.format("%.0f", part2))
+```
