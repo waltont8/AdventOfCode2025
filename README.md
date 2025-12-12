@@ -856,3 +856,82 @@ print("Value " .. string.format("%.0f", part1))
 local part2 = countPaths2(graph, "svr", "out", false, false)
 print("Value " .. string.format("%.0f", part2))
 ```
+
+# --- Day 12: Christmas Tree Farm ---
+No good options for M and by good I mean, has reasonable documentation and the compiler and libraries work easily. I went with **Nim** which I heard of but not tried.
+The part1 question itself is a nightmare. It's a really hard question to solve for the test input, but you can cheat for the real data. I got lucky in that I a) usually ignore the test data and b) decided to filter out any really wrong options first, mostly to test the parser. Turns out that's all you need to do. This would have taken a day otherwise.
+
+``` nim
+import std/[strutils, sequtils, sugar]
+
+proc parseFile(path: string): (seq[int], seq[seq[int]], seq[int]) =
+  let input = readFile(path)
+  var sections = getSections(input)
+
+  let lastSection = sections.pop()
+
+  var hashCounts: seq[int] = @[]
+  var finalArrays: seq[seq[int]] = @[]
+  var products: seq[int] = @[]
+
+  for sec in sections:
+    var running = 0
+    for line in sec.splitLines():
+      running = running + line.count('#')
+    hashCounts.add running
+
+  for line in lastSection.splitLines():
+    if line.contains(":"):
+      let parts = line.split(":", maxsplit = 1)
+
+      let before = parts[0].strip()
+      let bx = before.split("x")
+      let a = parseInt(bx[0])
+      let b = parseInt(bx[1])
+      products.add(a * b)
+
+      let nums = parts[1]
+        .split({',', ' '})
+        .filterIt(it.len > 0)
+        .mapIt(parseInt(it))
+      finalArrays.add nums
+
+  result = (hashCounts, finalArrays, products)
+
+proc getSections(s: string): seq[string] =
+  var outp: seq[string] = @[]
+  var buf = ""
+  for line in s.splitLines():
+    if line.strip() == "":
+      if buf.len > 0:
+        outp.add buf.strip()
+        buf = ""
+    else:
+      buf.add(line & "\n")
+  if buf.len > 0:
+    outp.add buf.strip()
+  return outp
+
+proc weightedTotals(hashCounts: seq[int], arrays: seq[seq[int]]): seq[int] =
+  result = @[]
+  for arr in arrays:
+    var total = 0
+    for i, value in arr:
+      total += value * hashCounts[i]
+    result.add total
+
+proc spaceCheck(products: seq[int], totals: seq[int]): int =
+  var count = 0
+  for i in 0..<products.len:
+    if products[i] >= totals[i]:
+      count.inc()
+  return count
+  
+when isMainModule:
+  let (hashCounts, finalArrays, products) = parseFile("input.txt")
+  let totals = weightedTotals(hashCounts, finalArrays)
+  let stage1 = spaceCheck(products, totals)
+
+  echo "Part1: ", stage1
+
+```
